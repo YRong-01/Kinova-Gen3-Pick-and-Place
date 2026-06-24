@@ -1,0 +1,7 @@
+Your first task is a simple task: control the robot arm to a user defined position & orientation.
+
+1. You can refer to /home/jiandong/Kinova-kortex2_Gen3_G3L/api_python/examples for all APIs that could be useful for this task. 
+
+2. In this task, your goal is to control the arm to a specific place, close the gripper with a user-defined force, and move to another place. 
+
+3. feel free to run any commands in bash
