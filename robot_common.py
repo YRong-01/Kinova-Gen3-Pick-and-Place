@@ -13,24 +13,66 @@
 # closing -- the gripper stops once that limit is exceeded.
 ###
 
-import sys
 import time
 import threading
 
-# --- Make the Kinova examples' utilities.py importable (connection helper) -----
-KORTEX_EXAMPLES_DIR = "/home/jiandong/Kinova-kortex2_Gen3_G3L/api_python/examples"
-sys.path.insert(0, KORTEX_EXAMPLES_DIR)
-import utilities  # noqa: E402  (provides DeviceConnection)
+from kortex_api.RouterClient import RouterClient
+from kortex_api.SessionManager import SessionManager
+from kortex_api.TCPTransport import TCPTransport
+from kortex_api.UDPTransport import UDPTransport
+from kortex_api.autogen.client_stubs.BaseClientRpc import BaseClient
+from kortex_api.autogen.client_stubs.BaseCyclicClientRpc import BaseCyclicClient
+from kortex_api.autogen.messages import Base_pb2, BaseCyclic_pb2, Session_pb2
 
-from kortex_api.autogen.client_stubs.BaseClientRpc import BaseClient            # noqa: E402
-from kortex_api.autogen.client_stubs.BaseCyclicClientRpc import BaseCyclicClient  # noqa: E402
-from kortex_api.autogen.messages import Base_pb2, BaseCyclic_pb2                 # noqa: E402
-
-from config import (ROBOT_IP, USERNAME, PASSWORD, TIMEOUT_DURATION,             # noqa: E402
+from config import (ROBOT_IP, USERNAME, PASSWORD, TIMEOUT_DURATION,
                     JOINT_SPEED_DURATION)
 
-# Re-export so scripts can grab the connection class from a single place.
-DeviceConnection = utilities.DeviceConnection
+
+class DeviceConnection:
+    TCP_PORT = 10000
+    UDP_PORT = 10001
+
+    def __init__(self, ip_address, port=TCP_PORT, credentials=("admin", "admin"), use_udp=False):
+        self.ip_address = ip_address
+        self.port = port
+        self.credentials = credentials
+        self.transport = UDPTransport() if use_udp else TCPTransport()
+        self.router = RouterClient(self.transport, RouterClient.basicErrorCallback)
+        self.session_manager = SessionManager(self.router)
+
+    @staticmethod
+    def createTcpConnection(args):
+        return DeviceConnection(
+            args.ip,
+            port=DeviceConnection.TCP_PORT,
+            credentials=(args.username, args.password),
+            use_udp=False,
+        )
+
+    @staticmethod
+    def createUdpConnection(args):
+        return DeviceConnection(
+            args.ip,
+            port=DeviceConnection.UDP_PORT,
+            credentials=(args.username, args.password),
+            use_udp=True,
+        )
+
+    def __enter__(self):
+        self.transport.connect(self.ip_address, self.port)
+
+        session_info = Session_pb2.CreateSessionInfo()
+        session_info.username = self.credentials[0]
+        session_info.password = self.credentials[1]
+        session_info.session_inactivity_timeout = 60000
+        session_info.connection_inactivity_timeout = 2000
+
+        self.session_manager.CreateSession(session_info)
+        return self.router
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.session_manager.CloseSession()
+        self.transport.disconnect()
 
 
 def connection_args():
@@ -106,6 +148,16 @@ def set_single_level_servoing(base):
     base.SetServoingMode(mode)
 
 
+def print_action_control_error(ex):
+    """Print a concise hint for common Kortex action-control failures."""
+    message = str(ex).splitlines()[0]
+    print("Action command failed: {}".format(message))
+    if "SESSION_NOT_IN_CONTROL" in str(ex):
+        print("The API session is connected but is not in control of the robot.")
+        print("On the robot tablet/Web App, release or take control for this session,")
+        print("close other control sessions, clear faults, then run the script again.")
+
+
 def move_to_home(base):
     """Move the arm to the built-in 'Home' position. Adapted from example 102."""
     set_single_level_servoing(base)
@@ -126,7 +178,13 @@ def move_to_home(base):
     result = {"event": None}
     notification_handle = base.OnNotificationActionTopic(
         check_for_end_or_abort(e, result), Base_pb2.NotificationOptions())
-    base.ExecuteActionFromReference(action_handle)
+    try:
+        base.ExecuteActionFromReference(action_handle)
+    except Exception as ex:
+        base.Unsubscribe(notification_handle)
+        print_action_control_error(ex)
+        return False
+
     finished = e.wait(TIMEOUT_DURATION)
     base.Unsubscribe(notification_handle)
 
@@ -311,7 +369,11 @@ def move_gripper_to_position(base, position, timeout=TIMEOUT_DURATION):
     finger = gripper_command.gripper.finger.add()
     finger.finger_identifier = 1
     finger.value = target
-    base.SendGripperCommand(gripper_command)
+    try:
+        base.SendGripperCommand(gripper_command)
+    except Exception as ex:
+        print_action_control_error(ex)
+        return False
 
     # Poll the measured position (example 106). Exit as soon as EITHER the target
     # is reached OR the fingers stop moving -- when closing onto an object wider
@@ -327,7 +389,12 @@ def move_gripper_to_position(base, position, timeout=TIMEOUT_DURATION):
     last_position = None
     last_move_time = start
     while time.time() - start < timeout:
-        measure = base.GetMeasuredGripperMovement(gripper_request)
+        try:
+            measure = base.GetMeasuredGripperMovement(gripper_request)
+        except Exception as ex:
+            print_action_control_error(ex)
+            return False
+
         if not len(measure.finger):    # no finger reported -> nothing to wait on
             break
         current = measure.finger[0].value

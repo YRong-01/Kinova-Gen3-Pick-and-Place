@@ -3,16 +3,15 @@
 ###
 # Simple-Manipulation -- pick and place using WAYPOINTS.
 #
-# Pick an object at POSE_A and place it at POSE_D, moving each contiguous path as ONE
-# continuous, validated Cartesian trajectory (move_waypoints.py / example 110/02).
-# See pick_and_place_points.py for the discrete point-to-point version.
+# Execute every entry in PICK_PLACE_TASKS using continuous, validated Cartesian
+# waypoint trajectories. See pick_and_place_points.py for discrete moves.
 #
 #   python3 pick_and_place_waypoints.py
 ###
 
 import sys
 
-from config import POSE_A, POSE_B, POSE_C, POSE_D, PRINT_POSE_AND_EXIT, BLENDING_RADIUS
+from config import PICK_PLACE_TASKS, PRINT_POSE_AND_EXIT, BLENDING_RADIUS
 from robot_common import (
     DeviceConnection, BaseClient, BaseCyclicClient,
     connection_args, print_current_pose, pose_is_reachable,
@@ -38,48 +37,79 @@ def main():
                 print("PRINT_POSE_AND_EXIT is set -- not moving.")
                 return 0
 
-            success = True
-
             # High-level Cartesian moves require single-level servoing.
             set_single_level_servoing(base)
 
-            # Fail fast: reject unreachable targets before any motion is commanded.
-            for pose, label in ((POSE_A, "A (pick)"), (POSE_B, "B (lift)"), (POSE_C, "C (place)")):
-                if not pose_is_reachable(base, base_cyclic, pose):
-                    print("Pose {} is not reachable (IK pre-check failed). Aborting "
-                          "before motion.".format(label))
+            if not PICK_PLACE_TASKS:
+                print(
+                    "PICK_PLACE_TASKS is empty. Run "
+                    "update_config_with_tag_positions.py first."
+                )
+                return 1
+
+            # Validate every endpoint before moving any block.
+            for task_number, task in enumerate(PICK_PLACE_TASKS, start=1):
+                pair = "{}->{}".format(task["pick_tag"], task["place_tag"])
+                for pose_name in ("POSE_A", "POSE_B", "POSE_C", "POSE_D"):
+                    if not pose_is_reachable(base, base_cyclic, task[pose_name]):
+                        print(
+                            "Task {} ({}) {} is not reachable. Aborting before "
+                            "motion.".format(task_number, pair, pose_name)
+                        )
+                        return 1
+
+            if not move_to_home(base):
+                print("Could not reach Home before starting the tasks.")
+                return 1
+
+            for task_number, task in enumerate(PICK_PLACE_TASKS, start=1):
+                pair = "{}->{}".format(task["pick_tag"], task["place_tag"])
+                print(
+                    "\n=== Task {}/{}: tag {} ===".format(
+                        task_number, len(PICK_PLACE_TASKS), pair
+                    )
+                )
+
+                if not move_cartesian_waypoints(base, [
+                    (task["POSE_B"], BLENDING_RADIUS),
+                    (task["POSE_A"], 0.0),
+                ], label="{} pick approach (B->A)".format(pair)):
+                    print("Task {} stopped before grasp.".format(pair))
                     return 1
 
-            success &= move_to_home(base)
+                if not move_gripper_to_position(base, 85.0):
+                    print("Task {} grasp failed.".format(pair))
+                    return 1
 
-            # 1) Approach + descend to the pick pose, as one trajectory (B -> A).
-            success &= move_cartesian_waypoints(base, [
-                (POSE_B, BLENDING_RADIUS),   # ready above the object
-                (POSE_A, 0.0),               # descend onto the object (exact stop)
-            ], label="pick approach (B->A)")
+                if not move_cartesian_waypoints(base, [
+                    (task["POSE_B"], BLENDING_RADIUS),
+                    (task["POSE_C"], BLENDING_RADIUS),
+                    (task["POSE_D"], 0.0),
+                ], label="{} carry + place (B->C->D)".format(pair)):
+                    print("Task {} stopped before release.".format(pair))
+                    return 1
 
-            # 2) Close the gripper on the object.
-            success &= move_gripper_to_position(base, 85.0)  # grasp
+                if not move_gripper_to_position(base, 0.0):
+                    print("Task {} release failed.".format(pair))
+                    return 1
 
-            # 3) Lift, traverse, and descend to the place pose, as one trajectory.
-            success &= move_cartesian_waypoints(base, [
-                (POSE_B, BLENDING_RADIUS),   # lift straight up
-                (POSE_C, BLENDING_RADIUS),   # ready above the place location
-                (POSE_D, 0.0),               # descend to place (exact stop)
-            ], label="carry + place (B->C->D)")
+                # Include D as the trajectory start so the controller receives
+                # two waypoints for the vertical D->C retreat.
+                if not move_cartesian_waypoints(base, [
+                    (task["POSE_D"], 0.0),
+                    (task["POSE_C"], 0.0),
+                ], label="{} retreat (D->C)".format(pair)):
+                    print("Task {} retreat failed.".format(pair))
+                    return 1
 
-            # 4) Release the object.
-            success &= move_gripper_to_position(base, 0.0)  # open
+                print("Task {} completed successfully.".format(pair))
 
-            # 5) Retreat above the place location, then go Home.
-            success &= move_cartesian_waypoints(base, [
-                (POSE_C, 0.0),               # retreat up (exact stop)
-            ], label="retreat (C)")
-            success &= move_to_home(base)
+            if not move_to_home(base):
+                print("All tasks finished, but the final return Home failed.")
+                return 1
 
-            print("Task completed successfully." if success
-                  else "Task finished with one or more failures.")
-            return 0 if success else 1
+            print("All waypoint pick-and-place tasks completed successfully.")
+            return 0
 
 
 if __name__ == "__main__":

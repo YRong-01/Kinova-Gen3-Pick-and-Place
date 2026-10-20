@@ -15,7 +15,7 @@ import threading
 from kortex_api.autogen.messages import Base_pb2
 
 from config import TIMEOUT_DURATION
-from robot_common import check_for_end_or_abort
+from robot_common import check_for_end_or_abort, print_action_control_error
 
 
 def move_cartesian(base, base_cyclic, pose, label=""):
@@ -42,7 +42,12 @@ def move_cartesian(base, base_cyclic, pose, label=""):
     )
 
     print("Executing action")
-    base.ExecuteAction(action)
+    try:
+        base.ExecuteAction(action)
+    except Exception as ex:
+        base.Unsubscribe(notification_handle)
+        print_action_control_error(ex)
+        return False
 
     print("Waiting for movement to finish ...")
     finished = e.wait(TIMEOUT_DURATION)

@@ -10,7 +10,7 @@
 ###
 
 # Connection ------------------------------------------------------------------
-ROBOT_IP = "192.168.1.10"
+ROBOT_IP = "192.168.2.10"
 USERNAME = "admin"
 PASSWORD = "admin"
 
@@ -40,15 +40,83 @@ TIMEOUT_DURATION = 30
 #   x, y, z      in meters
 #   theta_x/y/z  in degrees
 #
+#   These values can be regenerated from the CameraCalibration AprilTag pose
+#   estimates by running:
+#       python3 update_config_with_tag_positions.py
+#
+#   The updater detects pick/place pairs 1->2, 3->4, and 5->6, then writes
+#   PICK_PLACE_TASKS for sequential point-to-point execution.
+#
 #   Targets must stay inside the arm's DEXTEROUS workspace, not just within max
 #   reach: a pose can be < 0.9 m from the base yet still be unreachable because the
 #   wrist cannot achieve the requested orientation there. Rule of thumb: the farther
 #   out in x, the lower z must be (e.g. at x ~= 0.645, keep z <= ~0.25).
 #
-#   theta_y = -0.4 matches the proven-reachable pose from Kinova example 102/01; at
-#   this workspace boundary even a ~0.4 deg orientation change can flip the pose from
-#   reachable to IK-failure (which aborts the move).
-POSE_A = dict(x=0.645, y=0.012,  z=0.184, theta_x=178, theta_y=-0.4,   theta_z=87.4)   # pick (down on object)
-POSE_B = dict(x=0.645, y=0.012,  z=0.25,  theta_x=178, theta_y=-0.4,   theta_z=87.4)   # ready/lift above pick
-POSE_C = dict(x=0.478, y=-0.194, z=0.20,  theta_x=0.5, theta_y=-177.8, theta_z=172.9)  # ready above place
-POSE_D = dict(x=0.478, y=-0.194, z=0.056, theta_x=0.5, theta_y=-177.8, theta_z=172.9)  # place (down)
+#   POSE_A uses the detected pick x/y/z. POSE_D uses placement-tag x/y/yaw but
+#   preserves the pick tool Z because the flat placement tag's Z is the table
+#   surface. POSE_B and POSE_C are 9 cm above their pick/place poses.
+# BEGIN AUTO TAG TASKS
+POSE_A = dict(x=0.433914, y=0.207461, z=0.055574, theta_x=178.0, theta_y=-0.4, theta_z=93.0)
+POSE_B = dict(x=0.433914, y=0.207461, z=0.165574, theta_x=178.0, theta_y=-0.4, theta_z=93.0)
+POSE_C = dict(x=0.398829, y=0.040169, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=70.1)
+POSE_D = dict(x=0.398829, y=0.040169, z=0.085000, theta_x=178.0, theta_y=-0.4, theta_z=70.1)
+
+PICK_PLACE_TASKS = [
+    dict(
+        pick_tag=1,
+        place_tag=2,
+        POSE_A=dict(x=0.433914, y=0.207461, z=0.055574, theta_x=178.0, theta_y=-0.4, theta_z=93.0),
+        POSE_B=dict(x=0.433914, y=0.207461, z=0.165574, theta_x=178.0, theta_y=-0.4, theta_z=93.0),
+        POSE_C=dict(x=0.398829, y=0.040169, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=70.1),
+        POSE_D=dict(x=0.398829, y=0.040169, z=0.085000, theta_x=178.0, theta_y=-0.4, theta_z=70.1),
+    ),
+    dict(
+        pick_tag=3,
+        place_tag=4,
+        POSE_A=dict(x=0.690852, y=-0.115961, z=0.046750, theta_x=178.0, theta_y=-0.4, theta_z=50.4),
+        POSE_B=dict(x=0.690852, y=-0.115961, z=0.156750, theta_x=178.0, theta_y=-0.4, theta_z=50.4),
+        POSE_C=dict(x=0.521274, y=-0.083684, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=80.7),
+        POSE_D=dict(x=0.521274, y=-0.083684, z=0.085000, theta_x=178.0, theta_y=-0.4, theta_z=80.7),
+    ),
+    dict(
+        pick_tag=5,
+        place_tag=6,
+        POSE_A=dict(x=0.645676, y=0.158129, z=0.050105, theta_x=178.0, theta_y=-0.4, theta_z=69.6),
+        POSE_B=dict(x=0.645676, y=0.158129, z=0.160105, theta_x=178.0, theta_y=-0.4, theta_z=69.6),
+        POSE_C=dict(x=0.535848, y=0.061320, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=79.1),
+        POSE_D=dict(x=0.535848, y=0.061320, z=0.085000, theta_x=178.0, theta_y=-0.4, theta_z=79.1),
+    ),
+]
+# END AUTO TAG TASKS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
