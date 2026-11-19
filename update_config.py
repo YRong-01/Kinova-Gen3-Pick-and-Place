@@ -141,7 +141,7 @@ def parse_args():
         description="Capture AprilTag mappings 1->2, 3->4, and 5->6",
     )
     parser.add_argument("--camera-index", type=int, default=4)
-    parser.add_argument("--lift-height", type=float, default=0.11) # lift height 11cm after piicking up
+    parser.add_argument("--lift-height", type=float, default=0.11) # lift height 11cm after picking up
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()

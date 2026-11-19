@@ -56,35 +56,35 @@ TIMEOUT_DURATION = 30
 #   preserves the pick tool Z because the flat placement tag's Z is the table
 #   surface. POSE_B and POSE_C are 9 cm above their pick/place poses.
 # BEGIN AUTO TAG TASKS
-POSE_A = dict(x=0.433914, y=0.207461, z=0.055574, theta_x=178.0, theta_y=-0.4, theta_z=93.0)
-POSE_B = dict(x=0.433914, y=0.207461, z=0.165574, theta_x=178.0, theta_y=-0.4, theta_z=93.0)
-POSE_C = dict(x=0.398829, y=0.040169, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=70.1)
-POSE_D = dict(x=0.398829, y=0.040169, z=0.085000, theta_x=178.0, theta_y=-0.4, theta_z=70.1)
+POSE_A = dict(x=0.404270, y=0.150682, z=0.048877, theta_x=178.0, theta_y=-0.4, theta_z=86.4)
+POSE_B = dict(x=0.404270, y=0.150682, z=0.158877, theta_x=178.0, theta_y=-0.4, theta_z=86.4)
+POSE_C = dict(x=0.508680, y=-0.057835, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=30.5)
+POSE_D = dict(x=0.508680, y=-0.057835, z=0.065000, theta_x=178.0, theta_y=-0.4, theta_z=30.5)
 
 PICK_PLACE_TASKS = [
     dict(
         pick_tag=1,
         place_tag=2,
-        POSE_A=dict(x=0.433914, y=0.207461, z=0.055574, theta_x=178.0, theta_y=-0.4, theta_z=93.0),
-        POSE_B=dict(x=0.433914, y=0.207461, z=0.165574, theta_x=178.0, theta_y=-0.4, theta_z=93.0),
-        POSE_C=dict(x=0.398829, y=0.040169, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=70.1),
-        POSE_D=dict(x=0.398829, y=0.040169, z=0.085000, theta_x=178.0, theta_y=-0.4, theta_z=70.1),
+        POSE_A=dict(x=0.404270, y=0.150682, z=0.048877, theta_x=178.0, theta_y=-0.4, theta_z=86.4),
+        POSE_B=dict(x=0.404270, y=0.150682, z=0.158877, theta_x=178.0, theta_y=-0.4, theta_z=86.4),
+        POSE_C=dict(x=0.508680, y=-0.057835, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=30.5),
+        POSE_D=dict(x=0.508680, y=-0.057835, z=0.065000, theta_x=178.0, theta_y=-0.4, theta_z=30.5),
     ),
     dict(
         pick_tag=3,
         place_tag=4,
-        POSE_A=dict(x=0.690852, y=-0.115961, z=0.046750, theta_x=178.0, theta_y=-0.4, theta_z=50.4),
-        POSE_B=dict(x=0.690852, y=-0.115961, z=0.156750, theta_x=178.0, theta_y=-0.4, theta_z=50.4),
-        POSE_C=dict(x=0.521274, y=-0.083684, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=80.7),
-        POSE_D=dict(x=0.521274, y=-0.083684, z=0.085000, theta_x=178.0, theta_y=-0.4, theta_z=80.7),
+        POSE_A=dict(x=0.557339, y=0.106286, z=0.050021, theta_x=178.0, theta_y=-0.4, theta_z=62.2),
+        POSE_B=dict(x=0.557339, y=0.106286, z=0.160021, theta_x=178.0, theta_y=-0.4, theta_z=62.2),
+        POSE_C=dict(x=0.578489, y=-0.225526, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=-18.0),
+        POSE_D=dict(x=0.578489, y=-0.225526, z=0.065000, theta_x=178.0, theta_y=-0.4, theta_z=-18.0),
     ),
     dict(
         pick_tag=5,
         place_tag=6,
-        POSE_A=dict(x=0.645676, y=0.158129, z=0.050105, theta_x=178.0, theta_y=-0.4, theta_z=69.6),
-        POSE_B=dict(x=0.645676, y=0.158129, z=0.160105, theta_x=178.0, theta_y=-0.4, theta_z=69.6),
-        POSE_C=dict(x=0.535848, y=0.061320, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=79.1),
-        POSE_D=dict(x=0.535848, y=0.061320, z=0.085000, theta_x=178.0, theta_y=-0.4, theta_z=79.1),
+        POSE_A=dict(x=0.671732, y=0.004628, z=0.052963, theta_x=178.0, theta_y=-0.4, theta_z=43.2),
+        POSE_B=dict(x=0.671732, y=0.004628, z=0.162963, theta_x=178.0, theta_y=-0.4, theta_z=43.2),
+        POSE_C=dict(x=0.401521, y=-0.117962, z=0.300000, theta_x=178.0, theta_y=-0.4, theta_z=35.5),
+        POSE_D=dict(x=0.401521, y=-0.117962, z=0.065000, theta_x=178.0, theta_y=-0.4, theta_z=35.5),
     ),
 ]
 # END AUTO TAG TASKS

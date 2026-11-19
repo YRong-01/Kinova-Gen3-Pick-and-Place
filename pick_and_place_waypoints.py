@@ -21,7 +21,10 @@ from robot_common import (
 from move_waypoints import move_cartesian_waypoints
 
 
-def main():
+def main(tasks=None):
+    # Allow alternate planners to reuse the same validated waypoint execution.
+    if tasks is None:
+        tasks = PICK_PLACE_TASKS
     args = connection_args()
 
     with DeviceConnection.createTcpConnection(args) as router:        # TCP: actions + mode
@@ -40,7 +43,7 @@ def main():
             # High-level Cartesian moves require single-level servoing.
             set_single_level_servoing(base)
 
-            if not PICK_PLACE_TASKS:
+            if not tasks:
                 print(
                     "PICK_PLACE_TASKS is empty. Run "
                     "update_config_with_tag_positions.py first."
@@ -48,7 +51,7 @@ def main():
                 return 1
 
             # Validate every endpoint before moving any block.
-            for task_number, task in enumerate(PICK_PLACE_TASKS, start=1):
+            for task_number, task in enumerate(tasks, start=1):
                 pair = "{}->{}".format(task["pick_tag"], task["place_tag"])
                 for pose_name in ("POSE_A", "POSE_B", "POSE_C", "POSE_D"):
                     if not pose_is_reachable(base, base_cyclic, task[pose_name]):
@@ -62,11 +65,11 @@ def main():
                 print("Could not reach Home before starting the tasks.")
                 return 1
 
-            for task_number, task in enumerate(PICK_PLACE_TASKS, start=1):
+            for task_number, task in enumerate(tasks, start=1):
                 pair = "{}->{}".format(task["pick_tag"], task["place_tag"])
                 print(
                     "\n=== Task {}/{}: tag {} ===".format(
-                        task_number, len(PICK_PLACE_TASKS), pair
+                        task_number, len(tasks), pair
                     )
                 )
 
